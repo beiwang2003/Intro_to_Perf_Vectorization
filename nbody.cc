@@ -40,14 +40,19 @@ void MoveParticles(const int nParticles, ParticleArrays &particle, const float d
 void MoveParticles(const int nParticles, Particle* const particle, const float dt) {
 #endif
   // Loop over particles that experience force
+#ifdef SoA
+  float *xp = particle.x;
+  float *yp = particle.y;
+  float *zp = particle.z;
+#endif
   for (int i = 0; i < nParticles; i++) { 
 
     // Components of the gravity force on particle i
     float Fx = 0, Fy = 0, Fz = 0; 
 #ifdef SoA
-    float xi = particle.x[i];
-    float yi = particle.y[i];
-    float zi = particle.z[i];
+    float xi = xp[i];
+    float yi = yp[i];
+    float zi = zp[i];
 #else
     float xi = particle[i].x;
     float yi = particle[i].y;
@@ -55,8 +60,8 @@ void MoveParticles(const int nParticles, Particle* const particle, const float d
 #endif
       
     // Loop over particles that exert force: vectorization expected here
-#ifdef Alinged 
-#pragma omp simd aligned(particle.x, particle.y, particle.z: 64) 
+#ifdef Aligned
+#pragma omp simd aligned(xp, yp, zp: 64) 
 #else
 #pragma omp simd 
 #endif
@@ -67,9 +72,9 @@ void MoveParticles(const int nParticles, Particle* const particle, const float d
 
       // Newton's law of universal gravity
 #ifdef SoA
-      const float dx = particle.x[j] - xi;
-      const float dy = particle.y[j] - yi;
-      const float dz = particle.z[j] - zi;
+      const float dx = xp[j] - xi;
+      const float dy = yp[j] - yi;
+      const float dz = zp[j] - zi;
 #else
       const float dx = particle[j].x - xi;
       const float dy = particle[j].y - yi;
@@ -102,11 +107,7 @@ void MoveParticles(const int nParticles, Particle* const particle, const float d
 
   // Move particles according to their velocities
   // O(N) work, so using a serial loop
-#ifdef Alinged
-#pragma omp simd aligned(particle.x, particle.y, particle.z: 64)
-#else
-#pragma omp simd
-#endif
+
   for (int i = 0 ; i < nParticles; i++) { 
 #ifdef SoA
     particle.x[i]  += particle.vx[i]*dt;

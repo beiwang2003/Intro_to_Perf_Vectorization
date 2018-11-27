@@ -1,7 +1,7 @@
 ICXX = icpc
 GCXX = g++
 
-ICXXFLAGS=-O2 #-xCORE-AVX512 -qopt-zmm-usage=high #-DSoA -DAligned -DNo_FP_Conv
+ICXXFLAGS=-O2 #-xCORE-AVX512 -qopt-zmm-usage=high -DSoA -DAligned -DNo_FP_Conv
 GCXXFLAGS=-O3 -march=native -ffast-math 
 ICXXOMPFLAG = -qopenmp
 GCXXOMPFLAG = -fopenmp
