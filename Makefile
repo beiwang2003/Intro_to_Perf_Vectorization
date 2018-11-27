@@ -5,7 +5,7 @@ ICXXFLAGS=-O2 #-xCORE-AVX512 -qopt-zmm-usage=high #-DSoA -DAligned -DNo_FP_Conv
 GCXXFLAGS=-O3 -march=native -ffast-math 
 ICXXOMPFLAG = -qopenmp
 GCXXOMPFLAG = -fopenmp
-IOPTFLAGS = -g -qopt-report=5 -qopt-report-phase=vec -qopt-report-file=$@.optrpt
+IOPTFLAGS = -g -qopt-report=5 -qopt-report-phase=vec -inline-level=0 -qopt-report-filter="nbody.cc,63-89" -qopt-report-file=$@.optrpt
 GOPTFLAGS = -g 
 
 IOBJECTS = nbody.oicc
