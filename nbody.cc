@@ -86,10 +86,11 @@ void MoveParticles(const int nParticles, Particle* const particle, const float d
 #else
       const float drPower32  = pow(drSquared, 3.0/2.0);
 #endif
+      const float drPower32Inv = 1.0 / drPower32;
       // Calculate the net force
-      Fx += dx / drPower32;  
-      Fy += dy / drPower32;  
-      Fz += dz / drPower32;
+      Fx += dx * drPower32;  
+      Fy += dy * drPower32;  
+      Fz += dz * drPower32;
 
     }
 
