@@ -35,11 +35,14 @@ struct Particle {
 #endif
 
 #ifdef SoA
-void MoveParticles(const int nParticles, ParticleArrays &particle, const float dt) {
+float MoveParticles(const int nParticles, ParticleArrays &particle, const float dt) {
 #else
-void MoveParticles(const int nParticles, Particle* const particle, const float dt) {
+float MoveParticles(const int nParticles, Particle* const particle, const float dt) {
 #endif
   // Loop over particles that experience force
+  float energy = 0.0f;
+  const float G=1.0e-5f;
+  const float softening = 1.0e-3f;
 #ifdef SoA
   float *xp = particle.x;
   float *yp = particle.y;
@@ -68,10 +71,6 @@ void MoveParticles(const int nParticles, Particle* const particle, const float d
 #endif
 #endif
     for (int j = 0; j < nParticles; j++) { 
-      
-      // Avoid singularity and interaction with self
-      const float softening = 1e-20;
-
       // Newton's law of universal gravity
 #ifdef SoA
       const float dx = xp[j] - xi;
@@ -90,9 +89,9 @@ void MoveParticles(const int nParticles, Particle* const particle, const float d
 #endif
       const float drPower32Inv = 1.0 / drPower32;
       // Calculate the net force
-      Fx += dx * drPower32Inv;  
-      Fy += dy * drPower32Inv;  
-      Fz += dz * drPower32Inv;
+      Fx += dx * G * drPower32Inv;  
+      Fy += dy * G * drPower32Inv;  
+      Fz += dz * G * drPower32Inv;
 
     }
 
@@ -116,12 +115,16 @@ void MoveParticles(const int nParticles, Particle* const particle, const float d
     particle.x[i]  += particle.vx[i]*dt;
     particle.y[i]  += particle.vy[i]*dt;
     particle.z[i]  += particle.vz[i]*dt;
+    energy += particle.vx[i]*particle.vx[i] + particle.vy[i]*particle.vy[i] + particle.vz[i]*particle.vz[i];
 #else
     particle[i].x  += particle[i].vx*dt;
     particle[i].y  += particle[i].vy*dt;
     particle[i].z  += particle[i].vz*dt;
+    energy += particle[i].vx*particle[i].vx + particle[i].vy*particle[i].vy + particle[i].vz*particle[i].vz;
 #endif
   }
+
+  return energy;
 }
 
 int main(const int argc, const char** argv) {
@@ -153,12 +156,12 @@ int main(const int argc, const char** argv) {
 
   // Initialize random number generator and particles
   for (int i=0; i<nParticles; i++) {
-    particle.x[i]  = rand();
-    particle.y[i]  = rand();
-    particle.z[i]  = rand();
-    particle.vx[i] = rand();
-    particle.vy[i] = rand();
-    particle.vz[i] = rand();   
+    particle.x[i]  = (float) rand() / (float) RAND_MAX;
+    particle.y[i]  = (float) rand() / (float) RAND_MAX;
+    particle.z[i]  = (float) rand() / (float) RAND_MAX;
+    particle.vx[i] = (float) rand() / (float) RAND_MAX * 1.0e-3f;
+    particle.vy[i] = (float) rand() / (float) RAND_MAX * 1.0e-3f;
+    particle.vz[i] = (float) rand() / (float) RAND_MAX * 1.0e-3f;   
   }
 #else
   // Particle data stored as an Array of Structures (AoS)
@@ -168,12 +171,12 @@ int main(const int argc, const char** argv) {
 
   // Initialize random number generator and particles
   for (int i=0; i<nParticles; i++) {
-    particle[i].x = rand();
-    particle[i].y = rand();
-    particle[i].z = rand();
-    particle[i].vx = rand();
-    particle[i].vy = rand();
-    particle[i].vz = rand();   
+    particle[i].x = (float) rand() / (float) RAND_MAX;
+    particle[i].y = (float) rand() / (float) RAND_MAX;
+    particle[i].z = (float) rand() / (float) RAND_MAX;
+    particle[i].vx = (float) rand() / (float) RAND_MAX * 1.0e-3f;
+    particle[i].vy = (float) rand() / (float) RAND_MAX * 1.0e-3f;
+    particle[i].vz = (float) rand() / (float) RAND_MAX * 1.0e-3f;
   }
 #endif
 
@@ -188,11 +191,11 @@ int main(const int argc, const char** argv) {
 
   double rate = 0, dRate = 0; // Benchmarking data
   const int skipSteps = 3; // Skip first iteration is warm-up on Xeon Phi coprocessor
-  printf("\033[1m%5s %10s %10s %8s\033[0m\n", "Step", "Time, s", "Interact/s", "GFLOP/s"); fflush(stdout);
+  printf("\033[1m%5s %10s %10s %8s\033[0m %6s\n", "Step", "Time, s", "Interact/s", "GFLOP/s", "Energy"); fflush(stdout);
   for (int step = 1; step <= nSteps; step++) {
 
     const double tStart = omp_get_wtime(); // Start timing
-    MoveParticles(nParticles, particle, dt);
+    float energy = MoveParticles(nParticles, particle, dt);
     const double tEnd = omp_get_wtime(); // End timing
 
     const float HztoInts   = float(nParticles)*float(nParticles-1) ;
@@ -203,8 +206,8 @@ int main(const int argc, const char** argv) {
       dRate += HztoGFLOPs*HztoGFLOPs/((tEnd - tStart)*(tEnd-tStart)); 
     }
 
-    printf("%5d %10.3e %10.3e %8.1f %s\n", 
-	   step, (tEnd-tStart), HztoInts/(tEnd-tStart), HztoGFLOPs/(tEnd-tStart), (step<=skipSteps?"*":""));
+    printf("%5d %10.3e %10.3e %8.1f %s %8.1f\n", 
+	   step, (tEnd-tStart), HztoInts/(tEnd-tStart), HztoGFLOPs/(tEnd-tStart), (step<=skipSteps?"*":""), energy);
     fflush(stdout);
   }
   rate/=(double)(nSteps-skipSteps); 
