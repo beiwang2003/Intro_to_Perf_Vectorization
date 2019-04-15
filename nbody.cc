@@ -17,7 +17,8 @@ Redistribution or commercial usage without written permission
 from Colfax International is prohibited.
 Contact information can be found at http://colfax-intl.com/    */
 
-#include <cmath>
+//#include <cmath>
+#include <math.h>
 #include <cstdio>
 #include <omp.h>
 #include <stdlib.h>
@@ -83,11 +84,15 @@ float MoveParticles(const int nParticles, Particle* const particle, const float 
 #endif
       const float drSquared  = dx*dx + dy*dy + dz*dz + softening;
 #ifdef No_FP_Conv
-      const float drPower32  = powf(drSquared, 3.0/2.0);
+      //const float drPower32  = powf(drSquared, 3.0f/2.0f);
+      const float drSqrt = sqrtf(drSquared);
+      const float drPower32 = drSqrt*drSqrt*drSqrt;
 #else
-      const float drPower32  = pow(drSquared, 3.0/2.0);
+      //const float drPower32  = pow(drSquared, 3.0/2.0);
+      const float drSqrt = sqrt(drSquared);
+      const float drPower32 = drSqrt*drSqrt*drSqrt;
 #endif
-      const float drPower32Inv = 1.0 / drPower32;
+      const float drPower32Inv = 1.0f / drPower32;
       // Calculate the net force
       Fx += dx * G * drPower32Inv;  
       Fy += dy * G * drPower32Inv;  
@@ -191,7 +196,7 @@ int main(const int argc, const char** argv) {
 
   double rate = 0, dRate = 0; // Benchmarking data
   const int skipSteps = 3; // Skip first iteration is warm-up on Xeon Phi coprocessor
-  printf("\033[1m%5s %10s %10s %8s\033[0m %6s\n", "Step", "Time, s", "Interact/s", "GFLOP/s", "Energy"); fflush(stdout);
+  printf("\033[1m%5s %10s %10s %8s %6s\033[0m\n", "Step", "Time, s", "Interact/s", "GFLOP/s", "Energy"); fflush(stdout);
   for (int step = 1; step <= nSteps; step++) {
 
     const double tStart = omp_get_wtime(); // Start timing
