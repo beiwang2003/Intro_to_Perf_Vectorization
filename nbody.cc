@@ -60,10 +60,12 @@ void MoveParticles(const int nParticles, Particle* const particle, const float d
 #endif
       
     // Loop over particles that exert force: vectorization expected here
+#ifdef OMP_SIMD
 #ifdef Aligned
 #pragma omp simd aligned(xp, yp, zp: 64) reduction(+:Fx,Fy,Fz) 
 #else
 #pragma omp simd reduction(+:Fx,Fy,Fz)
+#endif
 #endif
     for (int j = 0; j < nParticles; j++) { 
       
