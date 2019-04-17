@@ -149,12 +149,12 @@ int main(const int argc, const char** argv) {
   // This is makes vectorization more efficient by improving strided access
   ParticleArrays particle;
 #ifdef Aligned 
-  particle.x  = (float*)_mm_malloc(nParticles*sizeof(float),64);
-  particle.y  = (float*)_mm_malloc(nParticles*sizeof(float),64);
-  particle.z  = (float*)_mm_malloc(nParticles*sizeof(float),64);
-  particle.vx = (float*)_mm_malloc(nParticles*sizeof(float),64);
-  particle.vy = (float*)_mm_malloc(nParticles*sizeof(float),64);
-  particle.vz = (float*)_mm_malloc(nParticles*sizeof(float),64);
+  posix_memalign((void **)&particle.x, 64, nParticles*sizeof(float));
+  posix_memalign((void **)&particle.y, 64, nParticles*sizeof(float));
+  posix_memalign((void **)&particle.z, 64, nParticles*sizeof(float));
+  posix_memalign((void **)&particle.vx, 64, nParticles*sizeof(float));
+  posix_memalign((void **)&particle.vy, 64, nParticles*sizeof(float));
+  posix_memalign((void **)&particle.vz, 64, nParticles*sizeof(float));
 #else
   particle.x  = new float[nParticles];
   particle.y  = new float[nParticles];
@@ -229,12 +229,12 @@ int main(const int argc, const char** argv) {
   printf("* - warm-up, not included in average\n\n");
 #ifdef SoA
 #ifdef Aligned
-  _mm_free(particle.x);
-  _mm_free(particle.y);
-  _mm_free(particle.z);
-  _mm_free(particle.vx);
-  _mm_free(particle.vy);
-  _mm_free(particle.vz);
+  free(particle.x);
+  free(particle.y);
+  free(particle.z);
+  free(particle.vx);
+  free(particle.vy);
+  free(particle.vz);
 #else
   delete particle.x;
   delete particle.y;
