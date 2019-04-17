@@ -1,11 +1,11 @@
 ICXX = icpc
 GCXX = g++
 
-ICXXFLAGS=-O2 -xCORE-AVX512 -qopt-zmm-usage=high -DSoA -DOMP_SIMD -DAligned
-GCXXFLAGS=-O3 -march=native -ffast-math 
+ICXXFLAGS=-O2 -xCORE-AVX512 -qopt-zmm-usage=high -DSoA -DOMP_SIMD -DAligned -DNo_FP_Conv
+GCXXFLAGS=-O3 -march=native -ffast-math -DSoA -DOMP_SIMD -DAligned -DNo_FP_Conv
 ICXXOMPFLAG = -qopenmp
 GCXXOMPFLAG = -fopenmp
-IOPTFLAGS = -g -qopt-report=5 -qopt-report-phase=vec -inline-level=0 -qopt-report-filter="nbody.cc,56-169" -qopt-report-file=$@.optrpt
+IOPTFLAGS = -g -qopt-report=5 -qopt-report-phase=vec -inline-level=0 -qopt-report-filter="nbody.cc,56-111" -qopt-report-file=$@.optrpt
 GOPTFLAGS = -g 
 
 IOBJECTS = nbody.oicc

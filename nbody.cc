@@ -53,59 +53,6 @@ float MoveParticles(const int nParticles, Particle* const particle, const float 
   float *vzp = particle.vz;
 #endif
 
-#ifdef NoConflict
-  for (int j = 0; j < nParticles; j++) {
-#ifdef SoA
-    const float xj = xp[j];
-    const float yj = yp[j];
-    const float zj = zp[j];
-#else
-    const float xj = particle[j].x;
-    const float yj = particle[j].y;
-    const float zj = particle[j].z;
-#endif
-#ifdef OMP_SIMD
-#if defined Aligned && defined SoA
-#pragma omp simd aligned(xp, yp, zp, vxp, vyp, vzp: 64)
-#else
-#pragma omp simd 
-#endif
-#endif
-    for (int i = 0; i < nParticles; i++) {
-#ifdef SoA
-      const float dx = xp[i] - xj; // 1flop
-      const float dy = yp[i] - yj; // 1flop
-      const float dz = zp[i] - zj; // 1flop
-#else
-      const float dx = particle[i].x - xj; 
-      const float dy = particle[i].y - yj; 
-      const float dz = particle[i].z - zj; 
-#endif
-      const float drSquared  = dx*dx + dy*dy + dz*dz + softening; // 6flop
-#ifdef No_FP_Conv
-      const float drPower32  = powf(drSquared, 3.0f/2.0f); // 1pow
-      //const float drSqrt = sqrtf(drSquared); // 1sqrt 
-      //const float drPower32 = drSqrt*drSqrt*drSqrt; // 2flops
-#else
-      const float drPower32  = pow(drSquared, 3.0/2.0);
-      //const float drSqrt = sqrt(drSquared);
-      //const float drPower32 = drSqrt*drSqrt*drSqrt;
-#endif
-      const float drPower32Inv = 1.0f / drPower32; // 1divident 
-
-      // Calculate the net force
-#ifdef SoA
-      vxp[i] += dt * dx * G * drPower32Inv; // 4 flops 
-      vyp[i] += dt * dy * G * drPower32Inv; // 4 flops 
-      vzp[i] += dt * dz * G * drPower32Inv; // 4 flops
-#else
-      particle[i].vx += dt * dx * G * drPower32Inv;
-      particle[i].vy += dt * dy * G * drPower32Inv;
-      particle[i].vz += dt * dz * G * drPower32Inv;
-#endif
-    }
-  }
-#else
   for (int i = 0; i < nParticles; i++) { 
     // Components of the gravity force on particle i
     float Fx = 0, Fy = 0, Fz = 0; 
@@ -141,12 +88,8 @@ float MoveParticles(const int nParticles, Particle* const particle, const float 
       const float drSquared  = dx*dx + dy*dy + dz*dz + softening; // 6flops
 #ifdef No_FP_Conv
       const float drPower32  = powf(drSquared, 3.0f/2.0f); // 1pow
-      //const float drSqrt = sqrtf(drSquared); // 1sqrt 
-      //const float drPower32 = drSqrt*drSqrt*drSqrt; // 2flops
 #else
       const float drPower32  = pow(drSquared, 3.0/2.0);
-      //const float drSqrt = sqrt(drSquared); 
-      //const float drPower32 = drSqrt*drSqrt*drSqrt;
 #endif
       const float drPower32Inv = 1.0f / drPower32; // 1divident
       // Calculate the net force
@@ -166,7 +109,6 @@ float MoveParticles(const int nParticles, Particle* const particle, const float 
     particle[i].vz += dt*Fz;
 #endif
   }
-#endif
 
   // Move particles according to their velocities
   // O(N) work, so using a serial loop
@@ -267,11 +209,8 @@ int main(const int argc, const char** argv) {
     const double tEnd = omp_get_wtime(); // End timing
 
     const float HztoInts   = float(nParticles)*float(nParticles-1);
-#ifdef NoConflict 
-    const float HztoGFLOPs = 1.0e-9*((13.0+12.0)*float(nParticles)*float(nParticles) + 12.0*float(nParticles));
-#else
-    const float HztoGFLOPs= 1.0e-9*((13.0+9.0)*float(nParticles)*float(nParticles) + (6.0+12.0)*float(nParticles));
-#endif
+    const float HztoGFLOPs= 1.0e-9*((11.0+9.0)*float(nParticles)*float(nParticles) + (6.0+12.0)*float(nParticles));
+
     if (step > skipSteps) { // Collect statistics
       rate  += HztoGFLOPs/(tEnd - tStart); 
       dRate += HztoGFLOPs*HztoGFLOPs/((tEnd - tStart)*(tEnd-tStart)); 
