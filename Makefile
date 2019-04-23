@@ -1,8 +1,8 @@
 ICXX = icpc
 GCXX = g++
 
-ICXXFLAGS=-O2 -xCORE-AVX512 -qopt-zmm-usage=high -DSoA -DOMP_SIMD -DAligned -DNo_FP_Conv
-GCXXFLAGS=-O3 -march=native -ffast-math -DSoA -DOMP_SIMD -DAligned -DNo_FP_Conv
+ICXXFLAGS= -O0
+GCXXFLAGS=-O3 -march=native -ffast-math
 ICXXOMPFLAG = -qopenmp
 GCXXOMPFLAG = -fopenmp
 IOPTFLAGS = -g -qopt-report=5 -qopt-report-phase=vec -inline-level=0 -qopt-report-filter="nbody.cc,56-111" -qopt-report-file=$@.optrpt
