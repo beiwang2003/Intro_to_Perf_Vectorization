@@ -9,12 +9,12 @@
 
 module load intel intel-advisor
 
-#step 1: run command line Advisor, with survey analysis 
+#run command line Advisor, with survey analysis 
 
-advixe-cl -c survey -project-dir nbody-advisor -- ./app-ICC 
+advisor --collect=survey --project-dir=./nbody-advisor -- ./app-ICC 
 
-#step 2: run command line Advisor, with Trip count analysis (need to run survey analysis first)
+#run command line Advisor, with Roofline analysis (need to run Survey analysis first)
 
-#advixe-cl -c tripcounts -flop -project-dir nbody-advisor -- ./app-ICC
+#advisor --collect=roofline --project-dir=./nbody-advisor -- ./app-ICC
 
 
