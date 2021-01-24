@@ -9,12 +9,7 @@
 
 module load intel intel-advisor
 
-#run command line Advisor, with survey analysis 
-
-advisor --collect=survey --project-dir=./nbody-advisor -- ./app-ICC 
-
-#run command line Advisor, with Roofline analysis (need to run Survey analysis first)
-
-#advisor --collect=roofline --project-dir=./nbody-advisor -- ./app-ICC
+#run command line Advisor, with Survey and Roofline analysis
+advisor --collect=roofline -enable-cache-simulation --project-dir=./nbody-advisor -- ./app-ICC
 
 
