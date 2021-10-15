@@ -17,8 +17,8 @@ Redistribution or commercial usage without written permission
 from Colfax International is prohibited.
 Contact information can be found at http://colfax-intl.com/    */
 
-//#include <cmath>
-#include <math.h>
+#include <cmath>
+//#include <math.h>
 #include <cstdio>
 #include <omp.h>
 #include <stdlib.h>
